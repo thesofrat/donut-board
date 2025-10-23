@@ -49,6 +49,11 @@ A visual planning tool for creating custom donut boards using live edge slabs fo
   - Export as PDF with detailed specifications
   - Professional presentation for customer approval
   - Includes all measurements and board details
+- **Settings Management**:
+  - Save current settings as JSON file
+  - Load previously saved settings
+  - Quickly switch between different board configurations
+  - Settings include all measurements and layout options (excludes visual preferences like colors)
 
 ## How to Use
 
@@ -111,6 +116,11 @@ No installation required! Simply:
   - Alternating rows are offset by half a position horizontally
   - Great for maximizing capacity on smaller boards
   - Creates a visually appealing pattern
+- **Save/Load Settings**: Use these buttons to save and restore your configurations
+  - Save different board sizes as JSON files for easy switching
+  - Perfect for comparing multiple design options
+  - Share configurations with clients or collaborators
+  - Saved settings include all measurements and the stagger option
 
 ## License
 

@@ -468,6 +468,13 @@
                     <button class="export-btn" onclick="exportAsPDF()">
                         <span>📄</span> Export as PDF
                     </button>
+                    <button class="export-btn" onclick="saveSettings()">
+                        <span>💾</span> Save Settings
+                    </button>
+                    <button class="export-btn" onclick="document.getElementById('loadSettingsInput').click()">
+                        <span>📁</span> Load Settings
+                    </button>
+                    <input type="file" id="loadSettingsInput" accept=".json" style="display: none;" onchange="loadSettings(event)">
                 </div>
 
                 <div id="layoutTab" class="tab-content active">
@@ -1199,6 +1206,79 @@
 
             // Restore original title
             document.title = originalTitle;
+        }
+
+        function saveSettings() {
+            const settings = {
+                version: '1.0',
+                unit: currentUnit,
+                boardWidth: parseFloat(document.getElementById('boardWidth').value),
+                boardHeight: parseFloat(document.getElementById('boardHeight').value),
+                donutDiameter: parseFloat(document.getElementById('donutDiameter').value),
+                donutSpacing: parseFloat(document.getElementById('donutSpacing').value),
+                marginLeft: parseFloat(document.getElementById('marginLeft').value),
+                marginRight: parseFloat(document.getElementById('marginRight').value),
+                marginTop: parseFloat(document.getElementById('marginTop').value),
+                marginBottom: parseFloat(document.getElementById('marginBottom').value),
+                pegHoleSize: parseFloat(document.getElementById('pegHoleSize').value),
+                staggerRows: document.getElementById('staggerRows').checked
+            };
+
+            const json = JSON.stringify(settings, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            const unitLabel = currentUnit === 'imperial' ? 'in' : 'cm';
+            link.download = `donut-board-settings-${settings.boardWidth}x${settings.boardHeight}${unitLabel}.json`;
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function loadSettings(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const settings = JSON.parse(e.target.result);
+
+                    // Validate that it's a settings file
+                    if (!settings.version || !settings.boardWidth) {
+                        alert('Invalid settings file. Please select a valid donut board settings file.');
+                        return;
+                    }
+
+                    // Apply unit first (which may trigger conversion)
+                    if (settings.unit && settings.unit !== currentUnit) {
+                        setUnit(settings.unit);
+                    }
+
+                    // Apply all settings
+                    document.getElementById('boardWidth').value = settings.boardWidth;
+                    document.getElementById('boardHeight').value = settings.boardHeight;
+                    document.getElementById('donutDiameter').value = settings.donutDiameter;
+                    document.getElementById('donutSpacing').value = settings.donutSpacing;
+                    document.getElementById('marginLeft').value = settings.marginLeft;
+                    document.getElementById('marginRight').value = settings.marginRight;
+                    document.getElementById('marginTop').value = settings.marginTop;
+                    document.getElementById('marginBottom').value = settings.marginBottom;
+                    document.getElementById('pegHoleSize').value = settings.pegHoleSize;
+                    document.getElementById('staggerRows').checked = settings.staggerRows || false;
+
+                    // Update visualization
+                    updateVisualization();
+
+                    // Reset file input so same file can be loaded again
+                    event.target.value = '';
+
+                } catch (error) {
+                    alert('Error loading settings file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
         }
 
         // Initialize on load
