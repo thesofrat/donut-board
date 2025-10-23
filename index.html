@@ -629,6 +629,17 @@
                 }
             }
 
+            // Update info panel BEFORE drawing (so errors in drawing don't prevent info update)
+            const unitLabel = currentUnit === 'imperial' ? 'in' : 'cm';
+            const areaUnit = currentUnit === 'imperial' ? 'sq in' : 'sq cm';
+
+            document.getElementById('totalDonuts').textContent = pegPositions.length || 0;
+            document.getElementById('totalRows').textContent = rows || 0;
+            document.getElementById('donutsPerRow').textContent = staggerRows ? `${donutsPerRow || 0} / ${(donutsPerRow - 1) || 0}` : (donutsPerRow || 0);
+            document.getElementById('boardArea').textContent = `${(boardWidth * boardHeight).toFixed(1)} ${areaUnit}`;
+            document.getElementById('horizontalSpacing').textContent = `${horizontalSpacing.toFixed(2)} ${unitLabel}`;
+            document.getElementById('verticalSpacing').textContent = `${verticalSpacing.toFixed(2)} ${unitLabel}`;
+
             // Draw the appropriate view
             if (currentTab === 'layout') {
                 drawLayoutView(boardWidth, boardHeight, donutDiameter, donutSpacing,
@@ -637,16 +648,6 @@
             } else {
                 drawDrillingGuide(donutDiameter, donutSpacing, pegHoleSize, staggerRows);
             }
-
-            // Update info panel
-            const unitLabel = currentUnit === 'imperial' ? 'in' : 'cm';
-            document.getElementById('totalDonuts').textContent = pegPositions.length;
-            document.getElementById('totalRows').textContent = rows;
-            document.getElementById('donutsPerRow').textContent = staggerRows ? `${donutsPerRow} / ${donutsPerRow - 1}` : donutsPerRow;
-            const areaUnit = currentUnit === 'imperial' ? 'sq in' : 'sq cm';
-            document.getElementById('boardArea').textContent = `${(boardWidth * boardHeight).toFixed(1)} ${areaUnit}`;
-            document.getElementById('horizontalSpacing').textContent = `${horizontalSpacing.toFixed(2)} ${unitLabel}`;
-            document.getElementById('verticalSpacing').textContent = `${verticalSpacing.toFixed(2)} ${unitLabel}`;
         }
 
         function drawLayoutView(boardWidth, boardHeight, donutDiameter, donutSpacing,
@@ -800,8 +801,9 @@
 
                 // Donut diameter (if donuts are shown and there's at least one)
                 if (showDonuts && pegPositions.length > 0) {
-                    const firstDonutX = offsetX + (startX + donutDiameter / 2) * scale;
-                    const firstDonutY = offsetY + (startY + donutDiameter / 2) * scale;
+                    const firstPeg = pegPositions[0];
+                    const firstDonutX = offsetX + firstPeg.x * scale;
+                    const firstDonutY = offsetY + firstPeg.y * scale;
                     const donutRadius = (donutDiameter / 2) * scale;
 
                     // Draw measurement line
