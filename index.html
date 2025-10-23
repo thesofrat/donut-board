@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donut Board Planner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            height: fit-content;
+        }
+
+        .control-section {
+            margin-bottom: 25px;
+        }
+
+        .control-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .unit-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .unit-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .unit-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .unit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .toggle-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .visualization {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #canvas {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .info-panel {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            width: 100%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍩 Donut Board Planner</h1>
+        <p class="subtitle">Plan your perfect wedding donut board with live edge slabs</p>
+
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-section">
+                    <h3>Units</h3>
+                    <div class="unit-selector">
+                        <button class="unit-btn active" id="imperialBtn" onclick="setUnit('imperial')">Imperial (in)</button>
+                        <button class="unit-btn" id="metricBtn" onclick="setUnit('metric')">Metric (cm)</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Board Dimensions</h3>
+                    <div class="input-group">
+                        <label for="boardWidth">Board Width <span id="widthUnit">(in)</span></label>
+                        <input type="number" id="boardWidth" value="36" min="1" step="0.1" oninput="updateVisualization()">
+                    </div>
+                    <div class="input-group">
+                        <label for="boardHeight">Board Height <span id="heightUnit">(in)</span></label>
+                        <input type="number" id="boardHeight" value="24" min="1" step="0.1" oninput="updateVisualization()">
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Donut Settings</h3>
+                    <div class="input-group">
+                        <label for="donutDiameter">Donut Diameter <span id="donutUnit">(in)</span></label>
+                        <input type="number" id="donutDiameter" value="3.5" min="0.1" step="0.1" oninput="updateVisualization()">
+                    </div>
+                    <div class="input-group">
+                        <label for="donutSpacing">Spacing Between Donuts <span id="spacingUnit">(in)</span></label>
+                        <input type="number" id="donutSpacing" value="1" min="0" step="0.1" oninput="updateVisualization()">
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Margins</h3>
+                    <div class="input-group">
+                        <label for="marginSides">Margin from Sides <span id="marginSidesUnit">(in)</span></label>
+                        <input type="number" id="marginSides" value="2" min="0" step="0.1" oninput="updateVisualization()">
+                    </div>
+                    <div class="input-group">
+                        <label for="marginEnds">Margin from Ends <span id="marginEndsUnit">(in)</span></label>
+                        <input type="number" id="marginEnds" value="2" min="0" step="0.1" oninput="updateVisualization()">
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Peg Settings</h3>
+                    <div class="input-group">
+                        <label for="pegHoleSize">Peg Hole Diameter <span id="pegUnit">(in)</span></label>
+                        <input type="number" id="pegHoleSize" value="0.5" min="0.1" step="0.1" oninput="updateVisualization()">
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Display Options</h3>
+                    <div class="toggle-group">
+                        <span class="toggle-label">Show Donuts</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="showDonuts" checked onchange="updateVisualization()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-group">
+                        <span class="toggle-label">Show Measurements</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="showMeasurements" checked onchange="updateVisualization()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visualization">
+                <canvas id="canvas" width="800" height="600"></canvas>
+                <div class="info-panel">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Total Donuts</div>
+                            <div class="info-value" id="totalDonuts">0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Rows</div>
+                            <div class="info-value" id="totalRows">0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Donuts per Row</div>
+                            <div class="info-value" id="donutsPerRow">0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Board Area</div>
+                            <div class="info-value" id="boardArea">0 sq in</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUnit = 'imperial';
+
+        function setUnit(unit) {
+            if (currentUnit === unit) return;
+
+            const conversionFactor = unit === 'metric' ? 2.54 : 1/2.54;
+
+            // Convert all input values
+            document.getElementById('boardWidth').value = (parseFloat(document.getElementById('boardWidth').value) * conversionFactor).toFixed(2);
+            document.getElementById('boardHeight').value = (parseFloat(document.getElementById('boardHeight').value) * conversionFactor).toFixed(2);
+            document.getElementById('donutDiameter').value = (parseFloat(document.getElementById('donutDiameter').value) * conversionFactor).toFixed(2);
+            document.getElementById('donutSpacing').value = (parseFloat(document.getElementById('donutSpacing').value) * conversionFactor).toFixed(2);
+            document.getElementById('marginSides').value = (parseFloat(document.getElementById('marginSides').value) * conversionFactor).toFixed(2);
+            document.getElementById('marginEnds').value = (parseFloat(document.getElementById('marginEnds').value) * conversionFactor).toFixed(2);
+            document.getElementById('pegHoleSize').value = (parseFloat(document.getElementById('pegHoleSize').value) * conversionFactor).toFixed(2);
+
+            currentUnit = unit;
+
+            // Update UI
+            const unitText = unit === 'imperial' ? '(in)' : '(cm)';
+            document.querySelectorAll('[id$="Unit"]').forEach(el => {
+                el.textContent = unitText;
+            });
+
+            document.getElementById('imperialBtn').classList.toggle('active', unit === 'imperial');
+            document.getElementById('metricBtn').classList.toggle('active', unit === 'metric');
+
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Get input values
+            const boardWidth = parseFloat(document.getElementById('boardWidth').value);
+            const boardHeight = parseFloat(document.getElementById('boardHeight').value);
+            const donutDiameter = parseFloat(document.getElementById('donutDiameter').value);
+            const donutSpacing = parseFloat(document.getElementById('donutSpacing').value);
+            const marginSides = parseFloat(document.getElementById('marginSides').value);
+            const marginEnds = parseFloat(document.getElementById('marginEnds').value);
+            const pegHoleSize = parseFloat(document.getElementById('pegHoleSize').value);
+            const showDonuts = document.getElementById('showDonuts').checked;
+            const showMeasurements = document.getElementById('showMeasurements').checked;
+
+            // Calculate scale to fit canvas
+            const padding = 80;
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const scale = Math.min(
+                (canvasWidth - padding * 2) / boardWidth,
+                (canvasHeight - padding * 2) / boardHeight
+            );
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // Center the board
+            const boardPixelWidth = boardWidth * scale;
+            const boardPixelHeight = boardHeight * scale;
+            const offsetX = (canvasWidth - boardPixelWidth) / 2;
+            const offsetY = (canvasHeight - boardPixelHeight) / 2;
+
+            // Draw board with wood grain effect
+            const gradient = ctx.createLinearGradient(offsetX, offsetY, offsetX + boardPixelWidth, offsetY);
+            gradient.addColorStop(0, '#D2B48C');
+            gradient.addColorStop(0.5, '#DEB887');
+            gradient.addColorStop(1, '#D2B48C');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(offsetX, offsetY, boardPixelWidth, boardPixelHeight);
+
+            // Draw board border
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(offsetX, offsetY, boardPixelWidth, boardPixelHeight);
+
+            // Calculate usable area
+            const usableWidth = boardWidth - 2 * marginSides;
+            const usableHeight = boardHeight - 2 * marginEnds;
+
+            // Calculate grid
+            const donutsPerRow = Math.floor((usableWidth + donutSpacing) / (donutDiameter + donutSpacing));
+            const rows = Math.floor((usableHeight + donutSpacing) / (donutDiameter + donutSpacing));
+
+            // Calculate actual spacing to center the grid
+            const totalDonutWidth = donutsPerRow * donutDiameter + (donutsPerRow - 1) * donutSpacing;
+            const totalDonutHeight = rows * donutDiameter + (rows - 1) * donutSpacing;
+            const startX = marginSides + (usableWidth - totalDonutWidth) / 2;
+            const startY = marginEnds + (usableHeight - totalDonutHeight) / 2;
+
+            // Draw margin guides if measurements are shown
+            if (showMeasurements) {
+                ctx.strokeStyle = '#FF6B6B';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+
+                const marginLeftX = offsetX + marginSides * scale;
+                const marginRightX = offsetX + (boardWidth - marginSides) * scale;
+                const marginTopY = offsetY + marginEnds * scale;
+                const marginBottomY = offsetY + (boardHeight - marginEnds) * scale;
+
+                // Vertical margin lines
+                ctx.beginPath();
+                ctx.moveTo(marginLeftX, offsetY);
+                ctx.lineTo(marginLeftX, offsetY + boardPixelHeight);
+                ctx.moveTo(marginRightX, offsetY);
+                ctx.lineTo(marginRightX, offsetY + boardPixelHeight);
+                ctx.stroke();
+
+                // Horizontal margin lines
+                ctx.beginPath();
+                ctx.moveTo(offsetX, marginTopY);
+                ctx.lineTo(offsetX + boardPixelWidth, marginTopY);
+                ctx.moveTo(offsetX, marginBottomY);
+                ctx.lineTo(offsetX + boardPixelWidth, marginBottomY);
+                ctx.stroke();
+
+                ctx.setLineDash([]);
+            }
+
+            // Draw donuts and pegs
+            let totalDonuts = 0;
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < donutsPerRow; col++) {
+                    const x = startX + col * (donutDiameter + donutSpacing) + donutDiameter / 2;
+                    const y = startY + row * (donutDiameter + donutSpacing) + donutDiameter / 2;
+
+                    const pixelX = offsetX + x * scale;
+                    const pixelY = offsetY + y * scale;
+                    const donutRadius = (donutDiameter / 2) * scale;
+                    const pegRadius = (pegHoleSize / 2) * scale;
+
+                    // Draw donut
+                    if (showDonuts) {
+                        // Donut body
+                        ctx.fillStyle = '#F4A460';
+                        ctx.beginPath();
+                        ctx.arc(pixelX, pixelY, donutRadius, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Donut outline
+                        ctx.strokeStyle = '#D2691E';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+
+                        // Frosting (random colors)
+                        const frostingColors = ['#FFB6C1', '#DDA0DD', '#F0E68C', '#87CEEB', '#98FB98'];
+                        const frostingColor = frostingColors[Math.floor((row * donutsPerRow + col) % frostingColors.length)];
+                        ctx.fillStyle = frostingColor;
+                        ctx.beginPath();
+                        ctx.arc(pixelX, pixelY, donutRadius * 0.85, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    // Draw peg hole (always visible)
+                    ctx.fillStyle = '#654321';
+                    ctx.beginPath();
+                    ctx.arc(pixelX, pixelY, pegRadius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Highlight peg hole
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    totalDonuts++;
+                }
+            }
+
+            // Draw measurements
+            if (showMeasurements) {
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+
+                const unitLabel = currentUnit === 'imperial' ? '"' : ' cm';
+
+                // Board dimensions
+                ctx.fillText(`${boardWidth.toFixed(1)}${unitLabel}`, offsetX + boardPixelWidth / 2, offsetY - 15);
+                ctx.save();
+                ctx.translate(offsetX - 15, offsetY + boardPixelHeight / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText(`${boardHeight.toFixed(1)}${unitLabel}`, 0, 0);
+                ctx.restore();
+
+                // Donut diameter (if donuts are shown and there's at least one)
+                if (showDonuts && totalDonuts > 0) {
+                    const firstDonutX = offsetX + (startX + donutDiameter / 2) * scale;
+                    const firstDonutY = offsetY + (startY + donutDiameter / 2) * scale;
+                    const donutRadius = (donutDiameter / 2) * scale;
+
+                    ctx.strokeStyle = '#4ECDC4';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(firstDonutX - donutRadius, firstDonutY);
+                    ctx.lineTo(firstDonutX + donutRadius, firstDonutY);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#4ECDC4';
+                    ctx.fillText(`⌀ ${donutDiameter.toFixed(1)}${unitLabel}`, firstDonutX, firstDonutY + donutRadius + 20);
+                }
+            }
+
+            // Update info panel
+            document.getElementById('totalDonuts').textContent = totalDonuts;
+            document.getElementById('totalRows').textContent = rows;
+            document.getElementById('donutsPerRow').textContent = donutsPerRow;
+            const areaUnit = currentUnit === 'imperial' ? 'sq in' : 'sq cm';
+            document.getElementById('boardArea').textContent = `${(boardWidth * boardHeight).toFixed(1)} ${areaUnit}`;
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            updateVisualization();
+        };
+    </script>
+</body>
+</html>
