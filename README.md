@@ -11,6 +11,16 @@ A visual planning tool for creating custom donut boards using live edge slabs fo
   - Spacing between donuts
   - Individual margins for left, right, top, and bottom edges
   - Peg hole size
+- **Donut Color Options**: Choose from varied colors or single color schemes:
+  - Varied Colors (rainbow effect)
+  - Chocolate
+  - Pink Frosted
+  - Purple Frosted
+  - Lemon Frosted
+  - Blue Frosted
+  - Green Frosted
+  - Orange Glazed
+  - Powdered Sugar
 - **Dual View Modes**:
   - **Layout View**: See the complete board with donuts, measurements, and margin guides
   - **Drilling Guide**: Zoomed-in view showing precise peg hole locations with crosshairs for drilling
@@ -18,6 +28,7 @@ A visual planning tool for creating custom donut boards using live edge slabs fo
   - Toggle donut visibility to see just the peg layout
   - Toggle measurements on/off
   - Beautiful wood grain board visualization with colorful donuts
+  - High-contrast measurements with white backgrounds and black text for easy reading
 - **Unit Conversion**: Switch between Imperial (inches) and Metric (centimeters) with automatic conversion
 - **Smart Layout**: Automatically calculates optimal donut placement and centers the grid
 - **Detailed Information Display**:
@@ -89,6 +100,9 @@ No installation required! Simply:
 - Peg holes are typically 0.5 inches (1.27 cm) for standard dowels
 - Use the Drilling Guide tab when marking holes on your board for precise placement
 - The crosshairs in the drilling guide help align your drill bit accurately
+- Select a single donut color (like Chocolate) to better visualize all-brown donuts or match your theme
+- Use "Varied Colors" option to see how a colorful assortment would look
+- High-contrast measurements make exported PDFs easy to read and professional
 
 ## License
 
