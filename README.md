@@ -9,15 +9,27 @@ A visual planning tool for creating custom donut boards using live edge slabs fo
   - Board dimensions (width and height)
   - Donut diameter
   - Spacing between donuts
-  - Margins from sides and ends
+  - Individual margins for left, right, top, and bottom edges
   - Peg hole size
+- **Dual View Modes**:
+  - **Layout View**: See the complete board with donuts, measurements, and margin guides
+  - **Drilling Guide**: Zoomed-in view showing precise peg hole locations with crosshairs for drilling
 - **Visual Controls**:
   - Toggle donut visibility to see just the peg layout
   - Toggle measurements on/off
   - Beautiful wood grain board visualization with colorful donuts
 - **Unit Conversion**: Switch between Imperial (inches) and Metric (centimeters) with automatic conversion
 - **Smart Layout**: Automatically calculates optimal donut placement and centers the grid
-- **Information Display**: Shows total donuts, rows, donuts per row, and board area
+- **Detailed Information Display**:
+  - Total donuts that fit on the board
+  - Number of rows and donuts per row
+  - Board area calculation
+  - Horizontal and vertical spacing (center-to-center)
+- **Drilling Guide Features**:
+  - Crosshair markers for precise drilling
+  - Hole numbering for reference
+  - Center-to-center spacing measurements
+  - Representative sample view for large layouts
 
 ## How to Use
 
@@ -25,10 +37,13 @@ A visual planning tool for creating custom donut boards using live edge slabs fo
 2. Select your preferred unit system (Imperial or Metric)
 3. Enter your board dimensions
 4. Adjust donut size and spacing preferences
-5. Set margins from edges
+5. Set individual margins for each edge (left, right, top, bottom)
 6. Configure peg hole size
 7. Use toggles to show/hide donuts and measurements
-8. The visualization updates in real-time as you adjust parameters
+8. Switch between tabs:
+   - **Layout View**: See the overall board design with all donuts
+   - **Drilling Guide**: View zoomed-in peg hole pattern with precise measurements
+9. The visualization updates in real-time as you adjust parameters
 
 ## Installation
 
@@ -45,6 +60,8 @@ No installation required! Simply:
 - Calculating material requirements
 - Visualizing different layout options
 - Determining optimal peg placement
+- Precise drilling guide for hole placement
+- Experimenting with asymmetric margins for irregular live edge slabs
 
 ## Technical Details
 
@@ -59,8 +76,11 @@ No installation required! Simply:
 - Start with your actual board dimensions
 - Standard donuts are typically 3-4 inches (7.6-10 cm) in diameter
 - Leave adequate spacing (1-2 inches) between donuts for easy access
+- Use different margins for each edge to accommodate irregular live edge shapes
 - Consider leaving 2-3 inches margin from edges for structural integrity
 - Peg holes are typically 0.5 inches (1.27 cm) for standard dowels
+- Use the Drilling Guide tab when marking holes on your board for precise placement
+- The crosshairs in the drilling guide help align your drill bit accurately
 
 ## License
 
