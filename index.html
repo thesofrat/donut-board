@@ -700,29 +700,25 @@
 
                     // Draw donut
                     if (showDonuts) {
-                        // Donut body
-                        ctx.fillStyle = '#F4A460';
+                        // Determine donut color
+                        let donutFillColor;
+                        if (donutColor === 'varied') {
+                            const frostingColors = ['#FFB6C1', '#DDA0DD', '#F0E68C', '#87CEEB', '#98FB98'];
+                            donutFillColor = frostingColors[Math.floor((row * donutsPerRow + col) % frostingColors.length)];
+                        } else {
+                            donutFillColor = donutColor;
+                        }
+
+                        // Draw donut circle
+                        ctx.fillStyle = donutFillColor;
                         ctx.beginPath();
                         ctx.arc(pixelX, pixelY, donutRadius, 0, Math.PI * 2);
                         ctx.fill();
 
-                        // Donut outline
-                        ctx.strokeStyle = '#D2691E';
+                        // Draw single outline
+                        ctx.strokeStyle = '#8B4513';
                         ctx.lineWidth = 1;
                         ctx.stroke();
-
-                        // Frosting
-                        let frostingColor;
-                        if (donutColor === 'varied') {
-                            const frostingColors = ['#FFB6C1', '#DDA0DD', '#F0E68C', '#87CEEB', '#98FB98'];
-                            frostingColor = frostingColors[Math.floor((row * donutsPerRow + col) % frostingColors.length)];
-                        } else {
-                            frostingColor = donutColor;
-                        }
-                        ctx.fillStyle = frostingColor;
-                        ctx.beginPath();
-                        ctx.arc(pixelX, pixelY, donutRadius * 0.85, 0, Math.PI * 2);
-                        ctx.fill();
                     }
 
                     // Draw peg hole (always visible)
