@@ -445,6 +445,13 @@
                             <span class="slider"></span>
                         </label>
                     </div>
+                    <div class="toggle-group">
+                        <span class="toggle-label">Stagger Rows</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="staggerRows" onchange="updateVisualization()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -575,27 +582,42 @@
             const showDonuts = document.getElementById('showDonuts').checked;
             const showMeasurements = document.getElementById('showMeasurements').checked;
             const donutColor = document.getElementById('donutColor').value;
+            const staggerRows = document.getElementById('staggerRows').checked;
 
             // Calculate usable area
             const usableWidth = boardWidth - marginLeft - marginRight;
             const usableHeight = boardHeight - marginTop - marginBottom;
 
-            // Calculate grid
-            const donutsPerRow = Math.floor((usableWidth + donutSpacing) / (donutDiameter + donutSpacing));
-            const rows = Math.floor((usableHeight + donutSpacing) / (donutDiameter + donutSpacing));
+            // Calculate grid spacing
+            const horizontalSpacing = donutDiameter + donutSpacing;
+            // For staggered rows, vertical spacing is sqrt(3)/2 ≈ 0.866 times the horizontal spacing
+            const verticalSpacing = staggerRows ? horizontalSpacing * 0.866 : horizontalSpacing;
+
+            // Calculate grid dimensions
+            const donutsPerRow = Math.floor((usableWidth + donutSpacing) / horizontalSpacing);
+            const rows = Math.floor((usableHeight + donutSpacing) / verticalSpacing);
+
+            // Calculate offset for staggered rows (half a position horizontally)
+            const staggerOffset = staggerRows ? horizontalSpacing / 2 : 0;
 
             // Calculate actual spacing to center the grid
             const totalDonutWidth = donutsPerRow * donutDiameter + (donutsPerRow - 1) * donutSpacing;
-            const totalDonutHeight = rows * donutDiameter + (rows - 1) * donutSpacing;
+            const totalDonutHeight = rows * donutDiameter + (rows - 1) * (staggerRows ? verticalSpacing - donutDiameter : donutSpacing);
             const startX = marginLeft + (usableWidth - totalDonutWidth) / 2;
             const startY = marginTop + (usableHeight - totalDonutHeight) / 2;
 
             // Store peg positions for drilling guide
             pegPositions = [];
             for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < donutsPerRow; col++) {
-                    const x = startX + col * (donutDiameter + donutSpacing) + donutDiameter / 2;
-                    const y = startY + row * (donutDiameter + donutSpacing) + donutDiameter / 2;
+                const isOddRow = row % 2 === 1;
+                const rowOffset = (staggerRows && isOddRow) ? staggerOffset : 0;
+                const colsInThisRow = (staggerRows && isOddRow && (startX + rowOffset + totalDonutWidth > boardWidth - marginRight))
+                    ? donutsPerRow - 1
+                    : donutsPerRow;
+
+                for (let col = 0; col < colsInThisRow; col++) {
+                    const x = startX + rowOffset + col * horizontalSpacing + donutDiameter / 2;
+                    const y = startY + row * verticalSpacing + donutDiameter / 2;
                     pegPositions.push({ x, y, row, col });
                 }
             }
@@ -604,25 +626,25 @@
             if (currentTab === 'layout') {
                 drawLayoutView(boardWidth, boardHeight, donutDiameter, donutSpacing,
                     marginLeft, marginRight, marginTop, marginBottom, pegHoleSize,
-                    showDonuts, showMeasurements, donutColor, startX, startY, donutsPerRow, rows);
+                    showDonuts, showMeasurements, donutColor, staggerRows);
             } else {
-                drawDrillingGuide(donutDiameter, donutSpacing, pegHoleSize, donutsPerRow, rows);
+                drawDrillingGuide(donutDiameter, donutSpacing, pegHoleSize, staggerRows);
             }
 
             // Update info panel
             const unitLabel = currentUnit === 'imperial' ? 'in' : 'cm';
             document.getElementById('totalDonuts').textContent = pegPositions.length;
             document.getElementById('totalRows').textContent = rows;
-            document.getElementById('donutsPerRow').textContent = donutsPerRow;
+            document.getElementById('donutsPerRow').textContent = staggerRows ? `${donutsPerRow} / ${donutsPerRow - 1}` : donutsPerRow;
             const areaUnit = currentUnit === 'imperial' ? 'sq in' : 'sq cm';
             document.getElementById('boardArea').textContent = `${(boardWidth * boardHeight).toFixed(1)} ${areaUnit}`;
-            document.getElementById('horizontalSpacing').textContent = `${(donutDiameter + donutSpacing).toFixed(2)} ${unitLabel}`;
-            document.getElementById('verticalSpacing').textContent = `${(donutDiameter + donutSpacing).toFixed(2)} ${unitLabel}`;
+            document.getElementById('horizontalSpacing').textContent = `${horizontalSpacing.toFixed(2)} ${unitLabel}`;
+            document.getElementById('verticalSpacing').textContent = `${verticalSpacing.toFixed(2)} ${unitLabel}`;
         }
 
         function drawLayoutView(boardWidth, boardHeight, donutDiameter, donutSpacing,
                                 marginLeft, marginRight, marginTop, marginBottom, pegHoleSize,
-                                showDonuts, showMeasurements, donutColor, startX, startY, donutsPerRow, rows) {
+                                showDonuts, showMeasurements, donutColor, staggerRows) {
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
 
@@ -687,52 +709,47 @@
                 ctx.setLineDash([]);
             }
 
-            // Draw donuts and pegs
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < donutsPerRow; col++) {
-                    const x = startX + col * (donutDiameter + donutSpacing) + donutDiameter / 2;
-                    const y = startY + row * (donutDiameter + donutSpacing) + donutDiameter / 2;
+            // Draw donuts and pegs using pegPositions array
+            pegPositions.forEach((pos, index) => {
+                const pixelX = offsetX + pos.x * scale;
+                const pixelY = offsetY + pos.y * scale;
+                const donutRadius = (donutDiameter / 2) * scale;
+                const pegRadius = (pegHoleSize / 2) * scale;
 
-                    const pixelX = offsetX + x * scale;
-                    const pixelY = offsetY + y * scale;
-                    const donutRadius = (donutDiameter / 2) * scale;
-                    const pegRadius = (pegHoleSize / 2) * scale;
-
-                    // Draw donut
-                    if (showDonuts) {
-                        // Determine donut color
-                        let donutFillColor;
-                        if (donutColor === 'varied') {
-                            const frostingColors = ['#FFB6C1', '#DDA0DD', '#F0E68C', '#87CEEB', '#98FB98'];
-                            donutFillColor = frostingColors[Math.floor((row * donutsPerRow + col) % frostingColors.length)];
-                        } else {
-                            donutFillColor = donutColor;
-                        }
-
-                        // Draw donut circle
-                        ctx.fillStyle = donutFillColor;
-                        ctx.beginPath();
-                        ctx.arc(pixelX, pixelY, donutRadius, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        // Draw single outline
-                        ctx.strokeStyle = '#8B4513';
-                        ctx.lineWidth = 1;
-                        ctx.stroke();
+                // Draw donut
+                if (showDonuts) {
+                    // Determine donut color
+                    let donutFillColor;
+                    if (donutColor === 'varied') {
+                        const frostingColors = ['#FFB6C1', '#DDA0DD', '#F0E68C', '#87CEEB', '#98FB98'];
+                        donutFillColor = frostingColors[index % frostingColors.length];
+                    } else {
+                        donutFillColor = donutColor;
                     }
 
-                    // Draw peg hole (always visible)
-                    ctx.fillStyle = '#654321';
+                    // Draw donut circle
+                    ctx.fillStyle = donutFillColor;
                     ctx.beginPath();
-                    ctx.arc(pixelX, pixelY, pegRadius, 0, Math.PI * 2);
+                    ctx.arc(pixelX, pixelY, donutRadius, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // Highlight peg hole
-                    ctx.strokeStyle = '#000';
+                    // Draw single outline
+                    ctx.strokeStyle = '#8B4513';
                     ctx.lineWidth = 1;
                     ctx.stroke();
                 }
-            }
+
+                // Draw peg hole (always visible)
+                ctx.fillStyle = '#654321';
+                ctx.beginPath();
+                ctx.arc(pixelX, pixelY, pegRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Highlight peg hole
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
 
             // Draw measurements
             if (showMeasurements) {
@@ -807,7 +824,7 @@
             }
         }
 
-        function drawDrillingGuide(donutDiameter, donutSpacing, pegHoleSize, donutsPerRow, rows) {
+        function drawDrillingGuide(donutDiameter, donutSpacing, pegHoleSize, staggerRows) {
             const canvas = document.getElementById('drillingCanvas');
             const ctx = canvas.getContext('2d');
 
@@ -826,24 +843,40 @@
             }
 
             const unitLabel = currentUnit === 'imperial' ? '"' : ' cm';
-            const centerToCenter = donutDiameter + donutSpacing;
+            const horizontalSpacing = donutDiameter + donutSpacing;
+            const verticalSpacing = staggerRows ? horizontalSpacing * 0.866 : horizontalSpacing;
 
-            // Calculate scale - show just a few holes at a time with good spacing
-            const displayRows = Math.min(3, rows);
-            const displayCols = Math.min(4, donutsPerRow);
-            const padding = 100;
+            // Filter peg positions to show sample (first few rows)
+            const displayRows = Math.min(3, Math.max(...pegPositions.map(p => p.row)) + 1);
+            const displayPegs = pegPositions.filter(p => p.row < displayRows);
 
-            // Make the holes large and easy to see
+            if (displayPegs.length === 0) {
+                ctx.fillStyle = '#666';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No holes to display', canvasWidth / 2, canvasHeight / 2);
+                return;
+            }
+
+            // Find bounds for display
+            const minX = Math.min(...displayPegs.map(p => p.x));
+            const maxX = Math.max(...displayPegs.map(p => p.x));
+            const minY = Math.min(...displayPegs.map(p => p.y));
+            const maxY = Math.max(...displayPegs.map(p => p.y));
+            const patternWidth = maxX - minX + donutDiameter;
+            const patternHeight = maxY - minY + donutDiameter;
+
+            const padding = 120;
             const scale = Math.min(
-                (canvasWidth - padding * 2) / (displayCols * centerToCenter),
-                (canvasHeight - padding * 2) / (displayRows * centerToCenter)
+                (canvasWidth - padding * 2) / patternWidth,
+                (canvasHeight - padding * 2) / patternHeight
             );
 
-            // Calculate starting position to center the display
-            const displayWidth = displayCols * centerToCenter * scale;
-            const displayHeight = displayRows * centerToCenter * scale;
+            // Calculate offsets to center the display
+            const displayWidth = patternWidth * scale;
+            const displayHeight = patternHeight * scale;
             const offsetX = (canvasWidth - displayWidth) / 2;
-            const offsetY = (canvasHeight - displayHeight) / 2;
+            const offsetY = (canvasHeight - displayHeight) / 2 + 30;
 
             // Draw title
             ctx.fillStyle = '#333';
@@ -851,58 +884,34 @@
             ctx.textAlign = 'center';
             ctx.fillText('Drilling Guide - Peg Hole Locations', canvasWidth / 2, 40);
 
-            // Draw grid lines
-            ctx.strokeStyle = '#ddd';
-            ctx.lineWidth = 1;
+            // Draw peg holes from actual positions
+            displayPegs.forEach((pos, index) => {
+                const x = offsetX + (pos.x - minX) * scale + donutDiameter * scale / 2;
+                const y = offsetY + (pos.y - minY) * scale + donutDiameter * scale / 2;
+                const pegRadius = (pegHoleSize / 2) * scale;
 
-            // Vertical lines
-            for (let col = 0; col <= displayCols; col++) {
-                const x = offsetX + col * centerToCenter * scale;
+                // Draw crosshairs for precise drilling
+                ctx.strokeStyle = '#FF6B6B';
+                ctx.lineWidth = 1;
+                const crosshairSize = pegRadius * 3;
+
                 ctx.beginPath();
-                ctx.moveTo(x, offsetY);
-                ctx.lineTo(x, offsetY + displayHeight);
+                ctx.moveTo(x - crosshairSize, y);
+                ctx.lineTo(x + crosshairSize, y);
+                ctx.moveTo(x, y - crosshairSize);
+                ctx.lineTo(x, y + crosshairSize);
                 ctx.stroke();
-            }
 
-            // Horizontal lines
-            for (let row = 0; row <= displayRows; row++) {
-                const y = offsetY + row * centerToCenter * scale;
+                // Draw peg hole
+                ctx.fillStyle = '#FFE4B5';
                 ctx.beginPath();
-                ctx.moveTo(offsetX, y);
-                ctx.lineTo(offsetX + displayWidth, y);
+                ctx.arc(x, y, pegRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = '#654321';
+                ctx.lineWidth = 1;
                 ctx.stroke();
-            }
-
-            // Draw peg holes
-            for (let row = 0; row < displayRows; row++) {
-                for (let col = 0; col < displayCols; col++) {
-                    const x = offsetX + col * centerToCenter * scale + (centerToCenter * scale) / 2;
-                    const y = offsetY + row * centerToCenter * scale + (centerToCenter * scale) / 2;
-                    const pegRadius = (pegHoleSize / 2) * scale;
-
-                    // Draw crosshairs for precise drilling
-                    ctx.strokeStyle = '#FF6B6B';
-                    ctx.lineWidth = 1;
-                    const crosshairSize = pegRadius * 3;
-
-                    ctx.beginPath();
-                    ctx.moveTo(x - crosshairSize, y);
-                    ctx.lineTo(x + crosshairSize, y);
-                    ctx.moveTo(x, y - crosshairSize);
-                    ctx.lineTo(x, y + crosshairSize);
-                    ctx.stroke();
-
-                    // Draw peg hole
-                    ctx.fillStyle = '#FFE4B5';
-                    ctx.beginPath();
-                    ctx.arc(x, y, pegRadius, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ctx.strokeStyle = '#654321';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                }
-            }
+            });
 
             // Helper function for text with background in drilling guide
             function drawTextWithBg(text, x, y, rotation = 0, fontSize = 14) {
@@ -936,87 +945,89 @@
             }
 
             // Draw hole labels with backgrounds
-            for (let row = 0; row < displayRows; row++) {
-                for (let col = 0; col < displayCols; col++) {
-                    const x = offsetX + col * centerToCenter * scale + (centerToCenter * scale) / 2;
-                    const y = offsetY + row * centerToCenter * scale + (centerToCenter * scale) / 2;
-                    const pegRadius = (pegHoleSize / 2) * scale;
+            displayPegs.forEach((pos, index) => {
+                const x = offsetX + (pos.x - minX) * scale + donutDiameter * scale / 2;
+                const y = offsetY + (pos.y - minY) * scale + donutDiameter * scale / 2;
+                const pegRadius = (pegHoleSize / 2) * scale;
 
-                    const holeNum = row * donutsPerRow + col + 1;
-                    drawTextWithBg(`#${holeNum}`, x, y - pegRadius - 15, 0, 14);
-                    drawTextWithBg(`⌀ ${pegHoleSize.toFixed(2)}${unitLabel}`, x, y + pegRadius + 25, 0, 12);
-                }
-            }
+                const holeNum = pegPositions.indexOf(pos) + 1;
+                drawTextWithBg(`#${holeNum}`, x, y - pegRadius - 15, 0, 14);
+                drawTextWithBg(`⌀ ${pegHoleSize.toFixed(2)}${unitLabel}`, x, y + pegRadius + 25, 0, 12);
+            });
 
-            // Draw spacing measurements
-            ctx.strokeStyle = '#FF0000';
-            ctx.fillStyle = '#FF0000';
-            ctx.lineWidth = 1;
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-
-            // Horizontal spacing (center to center)
-            if (displayCols > 1) {
-                const y1 = offsetY + displayHeight + 50;
-                const x1 = offsetX + (centerToCenter * scale) / 2;
-                const x2 = offsetX + (centerToCenter * scale) * 1.5;
-
-                // Draw line with arrows
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y1);
-                ctx.stroke();
-
-                // Arrows
-                const arrowSize = 10;
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x1 + arrowSize, y1 - arrowSize / 2);
-                ctx.lineTo(x1 + arrowSize, y1 + arrowSize / 2);
-                ctx.fill();
-
-                ctx.beginPath();
-                ctx.moveTo(x2, y1);
-                ctx.lineTo(x2 - arrowSize, y1 - arrowSize / 2);
-                ctx.lineTo(x2 - arrowSize, y1 + arrowSize / 2);
-                ctx.fill();
-
-                drawTextWithBg(`${centerToCenter.toFixed(2)}${unitLabel}`, (x1 + x2) / 2, y1 - 10);
-                ctx.font = '12px Arial';
-                drawTextWithBg('(center to center)', (x1 + x2) / 2, y1 + 25);
-            }
-
-            // Vertical spacing (center to center)
-            if (displayRows > 1) {
-                const x1 = offsetX + displayWidth + 50;
-                const y1 = offsetY + (centerToCenter * scale) / 2;
-                const y2 = offsetY + (centerToCenter * scale) * 1.5;
-
+            // Draw spacing measurements using actual peg positions
+            if (displayPegs.length >= 2) {
+                ctx.strokeStyle = '#FF0000';
+                ctx.fillStyle = '#FF0000';
+                ctx.lineWidth = 1;
                 ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
 
-                // Draw line with arrows
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x1, y2);
-                ctx.stroke();
+                // Find two horizontally adjacent pegs in the same row for horizontal spacing
+                const row0Pegs = displayPegs.filter(p => p.row === 0).sort((a, b) => a.x - b.x);
+                if (row0Pegs.length >= 2) {
+                    const peg1 = row0Pegs[0];
+                    const peg2 = row0Pegs[1];
+                    const x1 = offsetX + (peg1.x - minX) * scale + donutDiameter * scale / 2;
+                    const x2 = offsetX + (peg2.x - minX) * scale + donutDiameter * scale / 2;
+                    const y1 = offsetY + displayHeight + 40;
 
-                // Arrows
-                const arrowSize = 10;
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x1 - arrowSize / 2, y1 + arrowSize);
-                ctx.lineTo(x1 + arrowSize / 2, y1 + arrowSize);
-                ctx.fill();
+                    // Draw line with arrows
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y1);
+                    ctx.stroke();
 
-                ctx.beginPath();
-                ctx.moveTo(x1, y2);
-                ctx.lineTo(x1 - arrowSize / 2, y2 - arrowSize);
-                ctx.lineTo(x1 + arrowSize / 2, y2 - arrowSize);
-                ctx.fill();
+                    // Arrows
+                    const arrowSize = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x1 + arrowSize, y1 - arrowSize / 2);
+                    ctx.lineTo(x1 + arrowSize, y1 + arrowSize / 2);
+                    ctx.fill();
 
-                drawTextWithBg(`${centerToCenter.toFixed(2)}${unitLabel}`, x1 + 40, (y1 + y2) / 2, Math.PI / 2);
-                ctx.font = '12px Arial';
-                drawTextWithBg('(center to center)', x1 + 60, (y1 + y2) / 2, Math.PI / 2);
+                    ctx.beginPath();
+                    ctx.moveTo(x2, y1);
+                    ctx.lineTo(x2 - arrowSize, y1 - arrowSize / 2);
+                    ctx.lineTo(x2 - arrowSize, y1 + arrowSize / 2);
+                    ctx.fill();
+
+                    drawTextWithBg(`${horizontalSpacing.toFixed(2)}${unitLabel}`, (x1 + x2) / 2, y1 - 10, 0, 16);
+                    drawTextWithBg('(center to center)', (x1 + x2) / 2, y1 + 25, 0, 12);
+                }
+
+                // Find two vertically adjacent pegs for vertical spacing
+                const col0Pegs = displayPegs.filter(p => p.col === 0).sort((a, b) => a.y - b.y);
+                if (col0Pegs.length >= 2 && displayRows > 1) {
+                    const peg1 = col0Pegs[0];
+                    const peg2 = col0Pegs[1];
+                    const x1 = offsetX + displayWidth + 40;
+                    const y1 = offsetY + (peg1.y - minY) * scale + donutDiameter * scale / 2;
+                    const y2 = offsetY + (peg2.y - minY) * scale + donutDiameter * scale / 2;
+
+                    // Draw line with arrows
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x1, y2);
+                    ctx.stroke();
+
+                    // Arrows
+                    const arrowSize = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x1 - arrowSize / 2, y1 + arrowSize);
+                    ctx.lineTo(x1 + arrowSize / 2, y1 + arrowSize);
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y2);
+                    ctx.lineTo(x1 - arrowSize / 2, y2 - arrowSize);
+                    ctx.lineTo(x1 + arrowSize / 2, y2 - arrowSize);
+                    ctx.fill();
+
+                    drawTextWithBg(`${verticalSpacing.toFixed(2)}${unitLabel}`, x1 + 40, (y1 + y2) / 2, Math.PI / 2, 16);
+                    drawTextWithBg('(center to center)', x1 + 60, (y1 + y2) / 2, Math.PI / 2, 12);
+                }
             }
 
             // Draw note about pattern
@@ -1024,8 +1035,10 @@
             ctx.font = '14px Arial';
             ctx.textAlign = 'center';
             const noteY = canvasHeight - 30;
-            ctx.fillText(`Showing ${displayRows} rows × ${displayCols} columns (Pattern repeats for all ${pegPositions.length} holes)`,
-                canvasWidth / 2, noteY);
+            const noteText = staggerRows
+                ? `Showing first ${displayRows} rows (staggered pattern) - Pattern repeats for all ${pegPositions.length} holes`
+                : `Showing first ${displayRows} rows - Pattern repeats for all ${pegPositions.length} holes`;
+            ctx.fillText(noteText, canvasWidth / 2, noteY);
         }
 
         function exportAsImage() {
