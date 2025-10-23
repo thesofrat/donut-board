@@ -29,6 +29,7 @@ A visual planning tool for creating custom donut boards using live edge slabs fo
 - **Visual Controls**:
   - Toggle donut visibility to see just the peg layout
   - Toggle measurements on/off
+  - Stagger rows option for honeycomb/brick pattern (maximizes space efficiency)
   - Beautiful wood grain board visualization with colorful donuts
   - High-contrast measurements with white backgrounds and black text for easy reading
 - **Unit Conversion**: Switch between Imperial (inches) and Metric (centimeters) with automatic conversion
@@ -105,6 +106,11 @@ No installation required! Simply:
 - Select a single donut color (like Chocolate) to better visualize all-brown donuts or match your theme
 - Use "Varied Colors" option to see how a colorful assortment would look
 - High-contrast measurements make exported PDFs easy to read and professional
+- **Stagger Rows**: Enable this to create a brick/honeycomb pattern that fits more donuts in the same space
+  - Staggering reduces vertical spacing by ~13% while maintaining proper donut spacing
+  - Alternating rows are offset by half a position horizontally
+  - Great for maximizing capacity on smaller boards
+  - Creates a visually appealing pattern
 
 ## License
 
