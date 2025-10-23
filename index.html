@@ -383,6 +383,20 @@
                         <label for="donutSpacing">Spacing Between Donuts <span id="spacingUnit">(in)</span></label>
                         <input type="number" id="donutSpacing" value="1" min="0" step="0.1" oninput="updateVisualization()">
                     </div>
+                    <div class="input-group">
+                        <label for="donutColor">Donut Color</label>
+                        <select id="donutColor" onchange="updateVisualization()" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em;">
+                            <option value="varied">Varied Colors</option>
+                            <option value="#8B4513">Chocolate</option>
+                            <option value="#FFB6C1">Pink Frosted</option>
+                            <option value="#DDA0DD">Purple Frosted</option>
+                            <option value="#F0E68C">Lemon Frosted</option>
+                            <option value="#87CEEB">Blue Frosted</option>
+                            <option value="#98FB98">Green Frosted</option>
+                            <option value="#FFA500">Orange Glazed</option>
+                            <option value="#FFFFFF">Powdered Sugar</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="control-section">
@@ -558,6 +572,7 @@
             const pegHoleSize = parseFloat(document.getElementById('pegHoleSize').value);
             const showDonuts = document.getElementById('showDonuts').checked;
             const showMeasurements = document.getElementById('showMeasurements').checked;
+            const donutColor = document.getElementById('donutColor').value;
 
             // Calculate usable area
             const usableWidth = boardWidth - marginLeft - marginRight;
@@ -587,7 +602,7 @@
             if (currentTab === 'layout') {
                 drawLayoutView(boardWidth, boardHeight, donutDiameter, donutSpacing,
                     marginLeft, marginRight, marginTop, marginBottom, pegHoleSize,
-                    showDonuts, showMeasurements, startX, startY, donutsPerRow, rows);
+                    showDonuts, showMeasurements, donutColor, startX, startY, donutsPerRow, rows);
             } else {
                 drawDrillingGuide(donutDiameter, donutSpacing, pegHoleSize, donutsPerRow, rows);
             }
@@ -605,7 +620,7 @@
 
         function drawLayoutView(boardWidth, boardHeight, donutDiameter, donutSpacing,
                                 marginLeft, marginRight, marginTop, marginBottom, pegHoleSize,
-                                showDonuts, showMeasurements, startX, startY, donutsPerRow, rows) {
+                                showDonuts, showMeasurements, donutColor, startX, startY, donutsPerRow, rows) {
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
 
@@ -694,9 +709,14 @@
                         ctx.lineWidth = 2;
                         ctx.stroke();
 
-                        // Frosting (random colors)
-                        const frostingColors = ['#FFB6C1', '#DDA0DD', '#F0E68C', '#87CEEB', '#98FB98'];
-                        const frostingColor = frostingColors[Math.floor((row * donutsPerRow + col) % frostingColors.length)];
+                        // Frosting
+                        let frostingColor;
+                        if (donutColor === 'varied') {
+                            const frostingColors = ['#FFB6C1', '#DDA0DD', '#F0E68C', '#87CEEB', '#98FB98'];
+                            frostingColor = frostingColors[Math.floor((row * donutsPerRow + col) % frostingColors.length)];
+                        } else {
+                            frostingColor = donutColor;
+                        }
                         ctx.fillStyle = frostingColor;
                         ctx.beginPath();
                         ctx.arc(pixelX, pixelY, donutRadius * 0.85, 0, Math.PI * 2);
@@ -718,19 +738,43 @@
 
             // Draw measurements
             if (showMeasurements) {
-                ctx.fillStyle = '#333';
-                ctx.font = 'bold 14px Arial';
+                ctx.font = 'bold 16px Arial';
                 ctx.textAlign = 'center';
 
                 const unitLabel = currentUnit === 'imperial' ? '"' : ' cm';
 
+                // Helper function to draw text with background for contrast
+                function drawTextWithBackground(text, x, y, rotation = 0) {
+                    ctx.save();
+                    if (rotation !== 0) {
+                        ctx.translate(x, y);
+                        ctx.rotate(rotation);
+                        x = 0;
+                        y = 0;
+                    }
+
+                    // Measure text
+                    const metrics = ctx.measureText(text);
+                    const textWidth = metrics.width;
+                    const textHeight = 16;
+
+                    // Draw white background with black border
+                    ctx.fillStyle = 'white';
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    const padding = 6;
+                    ctx.fillRect(x - textWidth / 2 - padding, y - textHeight - padding / 2, textWidth + padding * 2, textHeight + padding * 1.5);
+                    ctx.strokeRect(x - textWidth / 2 - padding, y - textHeight - padding / 2, textWidth + padding * 2, textHeight + padding * 1.5);
+
+                    // Draw black text
+                    ctx.fillStyle = '#000';
+                    ctx.fillText(text, x, y);
+                    ctx.restore();
+                }
+
                 // Board dimensions
-                ctx.fillText(`${boardWidth.toFixed(1)}${unitLabel}`, offsetX + boardPixelWidth / 2, offsetY - 15);
-                ctx.save();
-                ctx.translate(offsetX - 15, offsetY + boardPixelHeight / 2);
-                ctx.rotate(-Math.PI / 2);
-                ctx.fillText(`${boardHeight.toFixed(1)}${unitLabel}`, 0, 0);
-                ctx.restore();
+                drawTextWithBackground(`${boardWidth.toFixed(1)}${unitLabel}`, offsetX + boardPixelWidth / 2, offsetY - 15);
+                drawTextWithBackground(`${boardHeight.toFixed(1)}${unitLabel}`, offsetX - 15, offsetY + boardPixelHeight / 2, -Math.PI / 2);
 
                 // Donut diameter (if donuts are shown and there's at least one)
                 if (showDonuts && pegPositions.length > 0) {
@@ -738,15 +782,29 @@
                     const firstDonutY = offsetY + (startY + donutDiameter / 2) * scale;
                     const donutRadius = (donutDiameter / 2) * scale;
 
-                    ctx.strokeStyle = '#4ECDC4';
-                    ctx.lineWidth = 2;
+                    // Draw measurement line
+                    ctx.strokeStyle = '#FF0000';
+                    ctx.lineWidth = 3;
                     ctx.beginPath();
                     ctx.moveTo(firstDonutX - donutRadius, firstDonutY);
                     ctx.lineTo(firstDonutX + donutRadius, firstDonutY);
                     ctx.stroke();
 
-                    ctx.fillStyle = '#4ECDC4';
-                    ctx.fillText(`⌀ ${donutDiameter.toFixed(1)}${unitLabel}`, firstDonutX, firstDonutY + donutRadius + 20);
+                    // Draw arrow ends
+                    const arrowSize = 8;
+                    ctx.fillStyle = '#FF0000';
+                    ctx.beginPath();
+                    ctx.moveTo(firstDonutX - donutRadius, firstDonutY);
+                    ctx.lineTo(firstDonutX - donutRadius + arrowSize, firstDonutY - arrowSize / 2);
+                    ctx.lineTo(firstDonutX - donutRadius + arrowSize, firstDonutY + arrowSize / 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(firstDonutX + donutRadius, firstDonutY);
+                    ctx.lineTo(firstDonutX + donutRadius - arrowSize, firstDonutY - arrowSize / 2);
+                    ctx.lineTo(firstDonutX + donutRadius - arrowSize, firstDonutY + arrowSize / 2);
+                    ctx.fill();
+
+                    drawTextWithBackground(`⌀ ${donutDiameter.toFixed(1)}${unitLabel}`, firstDonutX, firstDonutY + donutRadius + 30);
                 }
             }
         }
@@ -857,15 +915,44 @@
                 }
             }
 
+            // Helper function for text with background in drilling guide
+            function drawTextWithBg(text, x, y, rotation = 0) {
+                ctx.save();
+                if (rotation !== 0) {
+                    ctx.translate(x, y);
+                    ctx.rotate(rotation);
+                    x = 0;
+                    y = 0;
+                }
+
+                const metrics = ctx.measureText(text);
+                const textWidth = metrics.width;
+                const textHeight = 16;
+                const padding = 8;
+
+                // Draw white background with border
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.fillRect(x - textWidth / 2 - padding, y - textHeight - padding / 2, textWidth + padding * 2, textHeight + padding * 1.5);
+                ctx.strokeRect(x - textWidth / 2 - padding, y - textHeight - padding / 2, textWidth + padding * 2, textHeight + padding * 1.5);
+
+                // Draw black text
+                ctx.fillStyle = '#000';
+                ctx.fillText(text, x, y);
+                ctx.restore();
+            }
+
             // Draw spacing measurements
-            ctx.strokeStyle = '#4ECDC4';
-            ctx.fillStyle = '#4ECDC4';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#FF0000';
+            ctx.fillStyle = '#FF0000';
+            ctx.lineWidth = 3;
             ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
 
             // Horizontal spacing (center to center)
             if (displayCols > 1) {
-                const y1 = offsetY + displayHeight + 40;
+                const y1 = offsetY + displayHeight + 50;
                 const x1 = offsetX + (centerToCenter * scale) / 2;
                 const x2 = offsetX + (centerToCenter * scale) * 1.5;
 
@@ -889,15 +976,14 @@
                 ctx.lineTo(x2 - arrowSize, y1 + arrowSize / 2);
                 ctx.fill();
 
-                ctx.textAlign = 'center';
-                ctx.fillText(`${centerToCenter.toFixed(2)}${unitLabel}`, (x1 + x2) / 2, y1 - 15);
+                drawTextWithBg(`${centerToCenter.toFixed(2)}${unitLabel}`, (x1 + x2) / 2, y1 - 10);
                 ctx.font = '12px Arial';
-                ctx.fillText('(center to center)', (x1 + x2) / 2, y1 + 20);
+                drawTextWithBg('(center to center)', (x1 + x2) / 2, y1 + 25);
             }
 
             // Vertical spacing (center to center)
             if (displayRows > 1) {
-                const x1 = offsetX + displayWidth + 40;
+                const x1 = offsetX + displayWidth + 50;
                 const y1 = offsetY + (centerToCenter * scale) / 2;
                 const y2 = offsetY + (centerToCenter * scale) * 1.5;
 
@@ -923,14 +1009,9 @@
                 ctx.lineTo(x1 + arrowSize / 2, y2 - arrowSize);
                 ctx.fill();
 
-                ctx.save();
-                ctx.translate(x1 + 30, (y1 + y2) / 2);
-                ctx.rotate(Math.PI / 2);
-                ctx.textAlign = 'center';
-                ctx.fillText(`${centerToCenter.toFixed(2)}${unitLabel}`, 0, 0);
+                drawTextWithBg(`${centerToCenter.toFixed(2)}${unitLabel}`, x1 + 40, (y1 + y2) / 2, Math.PI / 2);
                 ctx.font = '12px Arial';
-                ctx.fillText('(center to center)', 0, 18);
-                ctx.restore();
+                drawTextWithBg('(center to center)', x1 + 60, (y1 + y2) / 2, Math.PI / 2);
             }
 
             // Draw note about pattern
