@@ -387,6 +387,8 @@
                         <label for="donutColor">Donut Color</label>
                         <select id="donutColor" onchange="updateVisualization()" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em;">
                             <option value="varied">Varied Colors</option>
+                            <option value="#D2B48C">Plain</option>
+                            <option value="#F5DEB3">Glazed</option>
                             <option value="#8B4513">Chocolate</option>
                             <option value="#FFB6C1">Pink Frosted</option>
                             <option value="#DDA0DD">Purple Frosted</option>
@@ -652,7 +654,7 @@
 
             // Draw board border
             ctx.strokeStyle = '#8B4513';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 1;
             ctx.strokeRect(offsetX, offsetY, boardPixelWidth, boardPixelHeight);
 
             // Draw margin guides if measurements are shown
@@ -706,7 +708,7 @@
 
                         // Donut outline
                         ctx.strokeStyle = '#D2691E';
-                        ctx.lineWidth = 2;
+                        ctx.lineWidth = 1;
                         ctx.stroke();
 
                         // Frosting
@@ -761,7 +763,7 @@
                     // Draw white background with black border
                     ctx.fillStyle = 'white';
                     ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 2;
+                    ctx.lineWidth = 1;
                     const padding = 6;
                     ctx.fillRect(x - textWidth / 2 - padding, y - textHeight - padding / 2, textWidth + padding * 2, textHeight + padding * 1.5);
                     ctx.strokeRect(x - textWidth / 2 - padding, y - textHeight - padding / 2, textWidth + padding * 2, textHeight + padding * 1.5);
@@ -784,7 +786,7 @@
 
                     // Draw measurement line
                     ctx.strokeStyle = '#FF0000';
-                    ctx.lineWidth = 3;
+                    ctx.lineWidth = 2;
                     ctx.beginPath();
                     ctx.moveTo(firstDonutX - donutRadius, firstDonutY);
                     ctx.lineTo(firstDonutX + donutRadius, firstDonutY);
@@ -884,7 +886,7 @@
 
                     // Draw crosshairs for precise drilling
                     ctx.strokeStyle = '#FF6B6B';
-                    ctx.lineWidth = 2;
+                    ctx.lineWidth = 1;
                     const crosshairSize = pegRadius * 3;
 
                     ctx.beginPath();
@@ -901,23 +903,17 @@
                     ctx.fill();
 
                     ctx.strokeStyle = '#654321';
-                    ctx.lineWidth = 3;
+                    ctx.lineWidth = 1;
                     ctx.stroke();
-
-                    // Draw hole label
-                    ctx.fillStyle = '#333';
-                    ctx.font = 'bold 14px Arial';
-                    ctx.textAlign = 'center';
-                    const holeNum = row * donutsPerRow + col + 1;
-                    ctx.fillText(`#${holeNum}`, x, y - pegRadius - 15);
-                    ctx.font = '12px Arial';
-                    ctx.fillText(`⌀ ${pegHoleSize.toFixed(2)}${unitLabel}`, x, y + pegRadius + 20);
                 }
             }
 
             // Helper function for text with background in drilling guide
-            function drawTextWithBg(text, x, y, rotation = 0) {
+            function drawTextWithBg(text, x, y, rotation = 0, fontSize = 14) {
                 ctx.save();
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.textAlign = 'center';
+
                 if (rotation !== 0) {
                     ctx.translate(x, y);
                     ctx.rotate(rotation);
@@ -927,13 +923,13 @@
 
                 const metrics = ctx.measureText(text);
                 const textWidth = metrics.width;
-                const textHeight = 16;
-                const padding = 8;
+                const textHeight = fontSize;
+                const padding = 6;
 
                 // Draw white background with border
                 ctx.fillStyle = 'white';
                 ctx.strokeStyle = '#000';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 1;
                 ctx.fillRect(x - textWidth / 2 - padding, y - textHeight - padding / 2, textWidth + padding * 2, textHeight + padding * 1.5);
                 ctx.strokeRect(x - textWidth / 2 - padding, y - textHeight - padding / 2, textWidth + padding * 2, textHeight + padding * 1.5);
 
@@ -943,10 +939,23 @@
                 ctx.restore();
             }
 
+            // Draw hole labels with backgrounds
+            for (let row = 0; row < displayRows; row++) {
+                for (let col = 0; col < displayCols; col++) {
+                    const x = offsetX + col * centerToCenter * scale + (centerToCenter * scale) / 2;
+                    const y = offsetY + row * centerToCenter * scale + (centerToCenter * scale) / 2;
+                    const pegRadius = (pegHoleSize / 2) * scale;
+
+                    const holeNum = row * donutsPerRow + col + 1;
+                    drawTextWithBg(`#${holeNum}`, x, y - pegRadius - 15, 0, 14);
+                    drawTextWithBg(`⌀ ${pegHoleSize.toFixed(2)}${unitLabel}`, x, y + pegRadius + 25, 0, 12);
+                }
+            }
+
             // Draw spacing measurements
             ctx.strokeStyle = '#FF0000';
             ctx.fillStyle = '#FF0000';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2;
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
 

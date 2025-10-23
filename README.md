@@ -13,6 +13,8 @@ A visual planning tool for creating custom donut boards using live edge slabs fo
   - Peg hole size
 - **Donut Color Options**: Choose from varied colors or single color schemes:
   - Varied Colors (rainbow effect)
+  - Plain
+  - Glazed
   - Chocolate
   - Pink Frosted
   - Purple Frosted
