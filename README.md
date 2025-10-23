@@ -30,6 +30,11 @@ A visual planning tool for creating custom donut boards using live edge slabs fo
   - Hole numbering for reference
   - Center-to-center spacing measurements
   - Representative sample view for large layouts
+- **Export Options**:
+  - Export as PNG image (high-quality download)
+  - Export as PDF with detailed specifications
+  - Professional presentation for customer approval
+  - Includes all measurements and board details
 
 ## How to Use
 
@@ -44,6 +49,9 @@ A visual planning tool for creating custom donut boards using live edge slabs fo
    - **Layout View**: See the overall board design with all donuts
    - **Drilling Guide**: View zoomed-in peg hole pattern with precise measurements
 9. The visualization updates in real-time as you adjust parameters
+10. Export your design:
+    - **Export as Image**: Download a PNG file for quick sharing
+    - **Export as PDF**: Create a professional PDF with specifications for customer approval or workshop reference
 
 ## Installation
 
